@@ -1,0 +1,23 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int N;
+
+    // Input: Read N from the user
+    cout << "Enter a positive integer N: ";
+    cin >> N;
+
+    // Check if the input is valid
+    if (N <= 0) {
+        cout << "Please enter a positive integer greater than 0." << endl;
+    } else {
+        // Loop to print natural numbers from 1 to N
+        for (int i = 1; i <= N; i++) {
+            cout << i << " ";
+        }
+        cout << endl; // New line after the loop
+    }
+
+    return 0;
+}
