@@ -1,0 +1,59 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+struct AcademicBioData {
+    string name;
+    string uid;
+    string section;
+    string areaOfInterest;
+    int age;
+    float lastYearCgpa;
+    string dob;
+    string hometown;
+};
+
+void displayBioData(const AcademicBioData& bio) {
+    cout << "\n--- Academic Bio Data ---" << endl;
+    cout << "Name: " << bio.name << endl;
+    cout << "UID: " << bio.uid << endl;
+    cout << "Section: " << bio.section << endl;
+    cout << "Area of Interest: " << bio.areaOfInterest << endl;
+    cout << "Age: " << bio.age << endl;
+    cout << "Last Year CGPA: " << bio.lastYearCgpa << endl;
+    cout << "Date of Birth (DOB): " << bio.dob << endl;
+    cout << "Hometown: " << bio.hometown << endl;
+}
+
+int main() {
+    AcademicBioData bio;
+
+    cout << "Enter your name: ";
+    getline(cin, bio.name);
+
+    cout << "Enter your UID: ";
+    getline(cin, bio.uid);
+
+    cout << "Enter your section: ";
+    getline(cin, bio.section);
+
+    cout << "Enter your area of interest: ";
+    getline(cin, bio.areaOfInterest);
+
+    cout << "Enter your age: ";
+    cin >> bio.age;
+
+    cout << "Enter your last year CGPA: ";
+    cin >> bio.lastYearCgpa;
+    cin.ignore(); // To handle the newline character left in the input buffer
+
+    cout << "Enter your date of birth (DOB): ";
+    getline(cin, bio.dob);
+
+    cout << "Enter your hometown: ";
+    getline(cin, bio.hometown);
+
+    displayBioData(bio);
+
+    return 0;
+}
