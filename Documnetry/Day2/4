@@ -1,150 +1,97 @@
 #include <iostream>
 #include <string>
+#include <thread>
+#include <chrono>
 
-struct Booking {
-    int seatNumber;
-    std::string passengerName;
-    Booking* next;
+struct Task {
+    int taskID;
+    int priority;
+    int executionTime;
+    Task* next;
 
-    Booking(int seat, const std::string& name) : seatNumber(seat), passengerName(name), next(nullptr) {}
+    Task(int id, int prio, int execTime) : taskID(id), priority(prio), executionTime(execTime), next(nullptr) {}
 };
 
-struct Compartment {
-    int compartmentID;
-    int totalSeats;
-    Booking* bookings;
+class TaskScheduler {
+private:
+    Task* head;
 
-    Compartment(int id, int seats) : compartmentID(id), totalSeats(seats), bookings(nullptr) {}
+public:
+    TaskScheduler() : head(nullptr) {}
 
-    void bookSeat(const std::string& passengerName) {
-        int seatNumber = 1;
-        Booking* current = bookings;
-        while (current && seatNumber == current->seatNumber) {
-            seatNumber++;
-            current = current->next;
-        }
+    void addTask(int taskID, int priority, int executionTime) {
+        Task* newTask = new Task(taskID, priority, executionTime);
 
-        if (seatNumber > totalSeats) {
-            std::cout << "No available seats in Compartment " << compartmentID << "!" << std::endl;
-            return;
-        }
-
-        Booking* newBooking = new Booking(seatNumber, passengerName);
-        newBooking->next = bookings;
-        bookings = newBooking;
-
-        std::cout << "Seat " << seatNumber << " booked for " << passengerName << " in Compartment " << compartmentID << "!" << std::endl;
-    }
-
-    void cancelBooking(int seatNumber) {
-        if (!bookings) {
-            std::cout << "No bookings found in Compartment " << compartmentID << "!" << std::endl;
-            return;
-        }
-
-        if (bookings->seatNumber == seatNumber) {
-            Booking* toDelete = bookings;
-            bookings = bookings->next;
-            delete toDelete;
-            std::cout << "Booking for seat " << seatNumber << " canceled in Compartment " << compartmentID << "!" << std::endl;
-            return;
-        }
-
-        Booking* current = bookings;
-        while (current->next && current->next->seatNumber != seatNumber) {
-            current = current->next;
-        }
-
-        if (current->next) {
-            Booking* toDelete = current->next;
-            current->next = current->next->next;
-            delete toDelete;
-            std::cout << "Booking for seat " << seatNumber << " canceled in Compartment " << compartmentID << "!" << std::endl;
+        if (!head || head->priority < priority) {
+            newTask->next = head;
+            head = newTask;
         } else {
-            std::cout << "Seat " << seatNumber << " not found in Compartment " << compartmentID << "!" << std::endl;
+            Task* current = head;
+            while (current->next && current->next->priority >= priority) {
+                current = current->next;
+            }
+            newTask->next = current->next;
+            current->next = newTask;
         }
+
+        std::cout << "Added Task ID: " << taskID << " with Priority: " << priority << " and Execution Time: " << executionTime << " seconds." << std::endl;
     }
 
-    void checkAvailability() {
-        int bookedSeats = 0;
-        Booking* current = bookings;
+    void completeTask() {
+        if (!head) {
+            std::cout << "No tasks to complete." << std::endl;
+            return;
+        }
+
+        Task* toDelete = head;
+        std::cout << "Completing Task ID: " << head->taskID << " with Priority: " << head->priority << std::endl;
+        head = head->next;
+        delete toDelete;
+    }
+
+    void displayTasks() {
+        if (!head) {
+            std::cout << "No tasks in the scheduler." << std::endl;
+            return;
+        }
+
+        std::cout << "Current Task List: " << std::endl;
+        Task* current = head;
         while (current) {
-            bookedSeats++;
+            std::cout << "Task ID: " << current->taskID << ", Priority: " << current->priority
+                      << ", Execution Time: " << current->executionTime << " seconds." << std::endl;
             current = current->next;
         }
-
-        std::cout << "Compartment " << compartmentID << " has " << (totalSeats - bookedSeats)
-                  << " available seats out of " << totalSeats << "." << std::endl;
     }
 
-    ~Compartment() {
-        while (bookings) {
-            Booking* toDelete = bookings;
-            bookings = bookings->next;
+    void executeTasks() {
+        while (head) {
+            displayTasks();
+            std::cout << "Executing Task ID: " << head->taskID << " with Priority: " << head->priority << "..." << std::endl;
+            std::this_thread::sleep_for(std::chrono::seconds(head->executionTime));
+            completeTask();
+        }
+        std::cout << "All tasks completed." << std::endl;
+    }
+
+    ~TaskScheduler() {
+        while (head) {
+            Task* toDelete = head;
+            head = head->next;
             delete toDelete;
         }
-    }
-};
-
-struct Train {
-    int trainID;
-    Compartment** compartments;
-    int compartmentCount;
-
-    Train(int id, int numberOfCompartments, int seatsPerCompartment) : trainID(id), compartmentCount(numberOfCompartments) {
-        compartments = new Compartment*[numberOfCompartments];
-        for (int i = 0; i < numberOfCompartments; ++i) {
-            compartments[i] = new Compartment(i + 1, seatsPerCompartment);
-        }
-    }
-
-    void bookSeat(int compartmentID, const std::string& passengerName) {
-        if (compartmentID <= 0 || compartmentID > compartmentCount) {
-            std::cout << "Invalid Compartment ID!" << std::endl;
-            return;
-        }
-        compartments[compartmentID - 1]->bookSeat(passengerName);
-    }
-
-    void cancelBooking(int compartmentID, int seatNumber) {
-        if (compartmentID <= 0 || compartmentID > compartmentCount) {
-            std::cout << "Invalid Compartment ID!" << std::endl;
-            return;
-        }
-        compartments[compartmentID - 1]->cancelBooking(seatNumber);
-    }
-
-    void checkAvailability(int compartmentID) {
-        if (compartmentID <= 0 || compartmentID > compartmentCount) {
-            std::cout << "Invalid Compartment ID!" << std::endl;
-            return;
-        }
-        compartments[compartmentID - 1]->checkAvailability();
-    }
-
-    ~Train() {
-        for (int i = 0; i < compartmentCount; ++i) {
-            delete compartments[i];
-        }
-        delete[] compartments;
     }
 };
 
 int main() {
-    Train train(1, 3, 5);
+    TaskScheduler scheduler;
 
-    train.bookSeat(1, "Alice");
-    train.bookSeat(1, "Bob");
-    train.bookSeat(2, "Charlie");
+    scheduler.addTask(1, 5, 2);
+    scheduler.addTask(2, 3, 1);
+    scheduler.addTask(3, 8, 3);
+    scheduler.addTask(4, 5, 1);
 
-    train.checkAvailability(1);
-    train.checkAvailability(2);
-
-    train.cancelBooking(1, 1);
-    train.checkAvailability(1);
-
-    train.bookSeat(1, "Diana");
-    train.checkAvailability(1);
+    scheduler.executeTasks();
 
     return 0;
 }
